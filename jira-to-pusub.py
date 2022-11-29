@@ -264,7 +264,6 @@ def process_changes(config: Config, changes: list):
 
         # Post all new events found to pubsub
         for event in ticket.events:
-            # Set some basic things for each change-set that we only get from the base ticket entry
             target_url = config.pubsub_url.format(**event)
             if config.debug:
                 print(event["timestamp"], event["key"], event["author"], event["action_human_text"])
