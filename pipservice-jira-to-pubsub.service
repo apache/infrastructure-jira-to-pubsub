@@ -4,7 +4,7 @@ Description=ASF Jira to PubSub Service
 [Service]
 Type=simple
 WorkingDirectory=/opt/jira-to-pubsub
-ExecStart=/usr/local/bin/pipenv run python3 jira-to-pubsub.py
+ExecStart=/usr/local/bin/pipenv run python3 jira_to_pubsub.py
 Restart=always
 User=www-data
 Group=www-data
