@@ -24,7 +24,7 @@ import yaml
 import sys
 
 DEFAULT_POLL_INTERVAL = 5  # Default is poll once every five seconds.
-DEFAULT_SETTINGS_FILE = "config.yaml"
+DEFAULT_SETTINGS_FILE = "jira-to-pubsub.yaml"
 
 # Launch time is recorded, so that we never fetch JIRA changes that are older than this.
 LAUNCH_TIME = time.time()

@@ -131,5 +131,5 @@ dmypy.json
 # PyCharm files
 .idea/
 
-# Don't copy config.yaml
-config.yaml
+# Don't copy jira-to-pubsub.yaml
+jira-to-pubsub.yaml
