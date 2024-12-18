@@ -64,7 +64,7 @@ class JiraTicket:
         """Parses Jira timestamps into datetime objects"""
         return datetime.datetime.strptime(t, "%Y-%m-%dT%H:%M:%S.%f%z")
 
-    def make_event_dict(self, entry: dict) -> [dict | None]:
+    def make_event_dict(self, entry: dict):
         """Constructs a basic change event from a Jira change-set entry of any type"""
 
         if "created" not in entry:  # All entries must have this field, or we'll break...
