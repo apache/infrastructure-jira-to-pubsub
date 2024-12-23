@@ -72,7 +72,7 @@ class JiraTicket:
         change_epoch = self.jira_to_datetime(entry.get("updated", entry["created"])).timestamp()
 
         # If this change is older than our last seen update, ignore and return None
-        if change_epoch <= self.last_update:
+        if change_epoch <= self.last_update and change_epoch != LAUNCH_TIME:
             return
 
         # Fetch author name and user ID if present
@@ -246,7 +246,7 @@ def process_changes(config: Config, changes: list):
         ticket = JiraTicket(config, issue)
 
         # Is this a brand-new issue?
-        if ticket.last_update == 0 and (now - ticket.created).seconds <= 30:
+        if ticket.last_update == LAUNCH_TIME and (now - ticket.created).seconds <= 30:
             UPDATES[ticket.key] = ticket.created.timestamp()
             base_event = ticket.make_event_dict(issue["fields"])
             base_event["action"] = "create"
