@@ -72,7 +72,7 @@ class JiraTicket:
         change_epoch = self.jira_to_datetime(entry.get("updated", entry["created"])).timestamp()
 
         # If this change is older than our last seen update, ignore and return None
-        if change_epoch <= self.last_update and change_epoch != LAUNCH_TIME:
+        if change_epoch <= self.last_update:
             return
 
         # Fetch author name and user ID if present
@@ -126,8 +126,8 @@ class JiraTicket:
                         new_event["action"] = "resolution"
                         new_event["from"] = old_resolution
                         new_event["to"] = new_resolution
-                        new_event["action_human_text"] = f"changed the resolution of <{self.link}|{self.key}> from "
-                        f"_{old_resolution}_ to _{new_resolution}_."
+                        new_event["action_human_text"] = (f"changed the resolution of <{self.link}|{self.key}> from "
+                                                          f"_{old_resolution}_ to _{new_resolution}_.")
                         self.events.append(new_event)
 
                 # Status change (like WFU/WFI)
@@ -237,27 +237,37 @@ def fetch_changes(config: Config):
         return []
     except AssertionError as e:
         print(f"General assertion error with Jira response: {e}")
+        return []
 
 
 def process_changes(config: Config, changes: list):
     now = datetime.datetime.now(pytz.utc)
 
     for issue in changes:
-        ticket = JiraTicket(config, issue)
+        try:
+            ticket = JiraTicket(config, issue)
+        except (KeyError, TypeError, ValueError) as e:  # Malformed issue data, skip it rather than crash.
+            print(f"Skipping malformed issue {issue.get('key', '??')}: {e}")
+            continue
 
-        # Is this a brand-new issue?
-        if ticket.last_update == LAUNCH_TIME and (now - ticket.created).seconds <= 30:
+        # Is this a brand-new issue? (created after launch, within the last 30 seconds, and not seen before)
+        age = (now - ticket.created).total_seconds()
+        if ticket.key not in UPDATES and ticket.created.timestamp() > LAUNCH_TIME and 0 <= age <= 30:
             UPDATES[ticket.key] = ticket.created.timestamp()
             base_event = ticket.make_event_dict(issue["fields"])
-            base_event["action"] = "create"
-            base_event["action_human_text"] = f"created {ticket.key}: {ticket.summary}"
-            base_event["description"] = issue["fields"].get("description", "(No description available)")
-            ticket.events.append(base_event)
+            if base_event:
+                base_event["action"] = "create"
+                base_event["action_human_text"] = f"created {ticket.key}: {ticket.summary}"
+                base_event["description"] = issue["fields"].get("description", "(No description available)")
+                ticket.events.append(base_event)
 
         # Parse changelog, comments, worklog
-        ticket.parse_changelog()
-        ticket.parse_comments()
-        ticket.parse_worklog()
+        try:
+            ticket.parse_changelog()
+            ticket.parse_comments()
+            ticket.parse_worklog()
+        except (KeyError, TypeError, ValueError) as e:  # Don't let one bad ticket take down the service.
+            print(f"Could not parse changes for {ticket.key}: {e}")
 
         if ticket.events:  # If any changes were found, update our "last updated" marker for this ticket.
             UPDATES[ticket.key] = max([event["timestamp"] for event in ticket.events])

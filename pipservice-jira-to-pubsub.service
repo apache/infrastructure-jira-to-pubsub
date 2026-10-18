@@ -6,6 +6,7 @@ Type=simple
 WorkingDirectory=/opt/jira-to-pubsub
 ExecStart=/usr/local/bin/pipenv run python3 jira_to_pubsub.py
 Restart=always
+RestartSec=5
 User=www-data
 Group=www-data
 
